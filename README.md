@@ -1,6 +1,4 @@
-# Product Requirements Document
-
-# Waters AI Vault
+# Osmosis - Knowledge and Enginerring loop
 
 **Status:** Draft for product and architecture review  
 **Product type:** Secure enterprise AI and knowledge platform  
@@ -242,42 +240,9 @@ Ticket modifications, regulated decisions, scientific approvals, quality approva
 
 ## 8. High-Level Architecture
 
-```text
-Users
-Developer | Scientist | Support | Quality | Manager | Administrator
-                               |
-                         Web Interface
-                               |
-                   Enterprise Identity / SSO
-                               |
-                         Secure API Gateway
-                               |
-       +-----------------------+-----------------------+
-       |                       |                       |
-Prompt/Data Classifier    Policy Engine          Audit Service
-       |                       |                       |
-       +-----------------------+-----------------------+
-                               |
-                        AI Orchestrator
-             +-----------------+-----------------+
-             |                 |                 |
-       RAG Retriever      Model Router      Looping Engine
-             |                 |                 |
-        ACL Filter        +----+----+       Ticket Analysis
-             |            |         |       Background Tasks
-             |         Internal   Approved
-             |           LLM      External LLM
-             |
-     +-------+-----------------------+
-     |                               |
-Knowledge Index              Metadata / ACL Store
-     |                               |
-     +---------------+---------------+
-                     |
-              Ingestion Pipeline
-                     |
-     Code | Documents | Tickets | SOPs | Service Knowledge
-```
+![High-level architecture overview](documents/diagram/osmosis-arch-22.svg)
+
+![Detailed architecture view](documents/diagram/osmosis-arch-21.svg)
 
 ### Architecture Boundary
 
