@@ -12,6 +12,8 @@ The platform provides secure AI access while preserving existing user permission
 
 Waters AI Vault is not intended to replace existing repositories, ticketing systems, scientific systems, or decision owners. It operates as an intelligence layer across them.
 
+![Osmosis architecture overview](documents/diagram/osmosis-arch-23.svg)
+
 ## 2. Product Vision
 
 Enable Waters employees to securely use AI across engineering, science, service, quality, and business functions while keeping proprietary knowledge governed within Waters-controlled boundaries.
