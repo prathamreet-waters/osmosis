@@ -1,11 +1,9 @@
 # Product Requirements Document
 
-Waters AI Vault
+# Waters AI Vault
 
-**Status:** Draft for product and architecture review
-
-**Product type:** Secure enterprise AI and knowledge platform
-
+**Status:** Draft for product and architecture review  
+**Product type:** Secure enterprise AI and knowledge platform  
 **Target environment:** Waters-controlled on-premises or approved hybrid infrastructure
 
 ## 1. Product Overview
@@ -158,383 +156,307 @@ Continuous tasks operate within defined schedules, permissions, resource limits,
 - Accept or reject AI recommendations.
 
 ### 5.6 Platform Administrators
- 
 
-Register approved models and knowledge sources. 
+- Register approved models and knowledge sources.
+- Configure routing and data-handling policies.
+- Manage role-based access.
+- Monitor model usage, cost, performance, and audit events.
+- Disable models, connectors, or sources centrally.
 
-Configure routing and data-handling policies. 
+## 6. Core Product Capabilities
 
-Manage role-based access. 
+### 6.1 Secure AI Interface
 
-Monitor model usage, cost, performance, and audit events. 
+A centralized chat and developer interface for accessing approved internal and external AI models.
 
-Disable models, connectors, or sources centrally. 
+### 6.2 Enterprise Identity and Access
 
- 
- 
+Users authenticate using enterprise identity. Existing roles and source permissions determine the knowledge available to each request.
 
-6. Core Product Capabilities 
+### 6.3 Permission-Aware RAG
 
-6.1 Secure AI Interface 
+The platform retrieves only the documents and knowledge that the authenticated user is authorized to access.
 
-A centralized chat and developer interface for accessing approved internal and external AI models. 
+Authorization must be applied before content reaches the model.
+
+### 6.4 Cited Responses
 
-6.2 Enterprise Identity and Access 
+Knowledge-based responses include references to the supporting sources.
 
-Users authenticate using enterprise identity. Existing roles and source permissions determine the knowledge available to each request. 
+When sufficient evidence is unavailable, the system should return an insufficient-evidence response rather than presenting an unsupported answer.
 
-6.3 Permission-Aware RAG 
+### 6.5 Ticket Intelligence
 
-The platform retrieves only the documents and knowledge that the authenticated user is authorized to access. 
+The platform evaluates tickets using:
 
-Authorization must be applied before content reaches the model. 
+- Release context
+- Dependencies
+- Business impact
+- Related incidents
+- Existing priority
+- Ticket age
+- Duplicate likelihood
+- Supporting evidence
+
+The output includes a recommended priority, explanation, related items, and citations.
 
-6.4 Cited Responses 
+### 6.6 Internal and External Model Routing
 
-Knowledge-based responses include references to the supporting sources. 
+Sensitive requests use a Waters-controlled model.
 
-When sufficient evidence is unavailable, the system should return an insufficient-evidence response rather than presenting an unsupported answer. 
+Approved non-sensitive requests may use an external licensed model when policy permits.
 
-6.5 Ticket Intelligence 
+The system must never silently route a sensitive request externally if the internal model becomes unavailable.
 
-The platform evaluates tickets using: 
+### 6.7 Audit Visibility
 
-Release context 
+Authorized users can review:
 
-Dependencies 
+- User identity
+- Request time
+- Data classification
+- Retrieved sources
+- Selected model
+- Routing decision
+- Policy outcome
+- Recommendation status
 
-Business impact 
+### 6.8 Human Decision Control
 
-Related incidents 
+AI provides decision support.
 
-Existing priority 
+Ticket modifications, regulated decisions, scientific approvals, quality approvals, and high-impact actions remain under authorized human control.
 
-Ticket age 
+## 7. Product Principles
 
-Duplicate likelihood 
+1. Existing enterprise systems remain the source of truth.
+2. Authorization is enforced before retrieval.
+3. Sensitive or uncertain requests fail closed.
+4. AI recommendations must include reasons and evidence.
+5. Derived knowledge inherits the controls of its source.
+6. AI must not autonomously approve high-impact decisions.
+7. Model prompts are not treated as a security boundary.
+8. Continuous AI processes must have clear limits and stopping conditions.
+9. Models and data stores must remain replaceable.
+10. Human owners remain accountable for final decisions.
 
-Supporting evidence 
+## 8. High-Level Architecture
 
-The output includes a recommended priority, explanation, related items, and citations. 
+```text
+Users
+Developer | Scientist | Support | Quality | Manager | Administrator
+                               |
+                         Web Interface
+                               |
+                   Enterprise Identity / SSO
+                               |
+                         Secure API Gateway
+                               |
+       +-----------------------+-----------------------+
+       |                       |                       |
+Prompt/Data Classifier    Policy Engine          Audit Service
+       |                       |                       |
+       +-----------------------+-----------------------+
+                               |
+                        AI Orchestrator
+             +-----------------+-----------------+
+             |                 |                 |
+       RAG Retriever      Model Router      Looping Engine
+             |                 |                 |
+        ACL Filter        +----+----+       Ticket Analysis
+             |            |         |       Background Tasks
+             |         Internal   Approved
+             |           LLM      External LLM
+             |
+     +-------+-----------------------+
+     |                               |
+Knowledge Index              Metadata / ACL Store
+     |                               |
+     +---------------+---------------+
+                     |
+              Ingestion Pipeline
+                     |
+     Code | Documents | Tickets | SOPs | Service Knowledge
+```
+
+### Architecture Boundary
+
+The model does not directly access source systems.
+
+All access passes through controlled services responsible for identity, permissions, policy enforcement, retrieval, routing, and auditing.
+
+## 9. Typical Request Flow
+
+1. User signs in through enterprise identity.
+2. The user submits a prompt or ticket for analysis.
+3. The platform classifies the request and its data sensitivity.
+4. The policy engine determines permitted sources and models.
+5. The retrieval layer applies user and document permissions.
+6. Authorized knowledge is retrieved.
+7. The model router selects an approved model.
+8. The model generates a grounded response.
+9. The response is returned with citations and limitations.
+10. The routing and policy decisions are recorded for audit.
+
+## 10. Proposed Technology Stack
+
+The final stack depends on Waters infrastructure and architecture review.
+
+### Application
+
+- React or Next.js
+- Fluent UI
+- Python with FastAPI
+- REST APIs with streaming responses
+
+### AI and Orchestration
+
+- Semantic Kernel, LangGraph, or lightweight custom orchestration
+- Ollama for local development
+- vLLM for production internal model serving
+- Approved internal and external model adapters
+
+### Retrieval and Data
+
+- PostgreSQL with pgvector or Qdrant
+- Local or approved embedding model
+- Hybrid keyword and vector search
+- PostgreSQL for policy, ACL, and application metadata
+
+### Identity and Security
+
+- Microsoft Entra ID
+- OAuth 2.0 and OpenID Connect
+- Azure Key Vault, HashiCorp Vault, or approved secrets management
+- TLS, private endpoints, and restricted network egress
+
+### Deployment and Monitoring
+
+- Docker Compose for development
+- Kubernetes or OpenShift for production
+- OpenTelemetry, Prometheus, and Grafana
+- Waters-controlled on-premises or approved hybrid infrastructure
+
+## 11. Codebase Structure
+
+A modular monorepo can keep the initial platform manageable.
+
+```text
+waters-ai-vault/
+|
++-- apps/
+|   +-- web/                    # User and admin interface
+|   +-- api/                    # FastAPI endpoints
+|   +-- worker/                 # Ingestion and background jobs
+|
++-- services/
+|   +-- policy/                 # Classification and policy enforcement
+|   +-- retrieval/              # Search and permission filtering
+|   +-- model-router/           # Internal and external model routing
+|   +-- ticket-intelligence/    # Ticket analysis
+|   +-- looping-engine/         # Continuous background analysis
+|   +-- audit/                  # Audit event handling
+|   +-- evaluation/             # AI security and quality checks
+|
++-- connectors/
+|   +-- sharepoint/
+|   +-- azure-devops/
+|   +-- github/
+|   +-- servicenow/
+|   +-- file-ingestion/
+|
++-- packages/
+|   +-- contracts/              # Shared schemas
+|   +-- security/               # Shared authorization utilities
+|   +-- prompts/                # Version-controlled prompts
+|   +-- telemetry/              # Logs, traces and metrics
+|
++-- infrastructure/
+|   +-- docker/
+|   +-- kubernetes/
+|   +-- monitoring/
+|
++-- tests/
+|   +-- unit/
+|   +-- integration/
+|   +-- security/
+|
++-- docs/
+|   +-- architecture/
+|   +-- decisions/
+|
++-- README.md
++-- docker-compose.yml
+```
 
-6.6 Internal and External Model Routing 
+## 12. Scope Boundaries
 
-Sensitive requests use a Waters-controlled model. 
+Waters AI Vault will not initially:
 
-Approved non-sensitive requests may use an external licensed model when policy permits. 
+- Replace existing ticketing or document-management systems.
+- Train a foundation model from scratch.
+- Provide unrestricted access to internal repositories.
+- Automatically modify ticket priorities.
+- Autonomously approve scientific, quality, safety, or regulatory decisions.
+- Control laboratory instruments.
+- Treat AI-generated content as an authoritative record.
+- Send sensitive content to external AI services.
+- Run unrestricted AI agents without resource and action limits.
 
-The system must never silently route a sensitive request externally if the internal model becomes unavailable. 
+## 13. Key Risks
 
-6.7 Audit Visibility 
+### 13.1 On-Premises Cost
 
-Authorized users can review: 
+GPU infrastructure, model operations, power, maintenance, and specialist support may cost more than expected.
 
-User identity 
+### 13.2 Model Capability
 
-Request time 
+Smaller internal models may not provide sufficient quality for complex scientific or engineering tasks.
 
-Data classification 
+### 13.3 Prompt Injection
 
-Retrieved sources 
+Malicious instructions may enter through user prompts, tickets, documents, code comments, or uploaded files.
 
-Selected model 
+### 13.4 Permission Leakage
 
-Routing decision 
+Incorrect ACL synchronization or retrieval filtering may expose restricted information.
 
-Policy outcome 
+### 13.5 Secondary Knowledge Leakage
 
-Recommendation status 
+Generated summaries or embeddings may reveal protected information even when raw documents remain restricted.
 
-6.8 Human Decision Control 
+### 13.6 Incorrect Recommendations
 
-AI provides decision support. 
+AI may misunderstand release context, dependencies, or business impact and recommend the wrong ticket priority.
 
-Ticket modifications, regulated decisions, scientific approvals, quality approvals, and high-impact actions remain under authorized human control. 
+### 13.7 Continuous Loop Failure
 
- 
- 
+Background AI processes may create repeated alerts, unnecessary compute usage, or unreliable feedback loops.
 
-7. Product Principles 
+### 13.8 Increased Platform Complexity
 
-Existing enterprise systems remain the source of truth. 
+The solution may introduce another enterprise platform that requires infrastructure, governance, security, support, and long-term ownership.
 
-Authorization is enforced before retrieval. 
+## 14. Uncertainties
 
-Sensitive or uncertain requests fail closed. 
+### 14.1 On-Premises Feasibility
 
-AI recommendations must include reasons and evidence. 
+Will running AI on-prem be technically and financially feasible?
 
-Derived knowledge inherits the controls of its source. 
+This depends on expected usage, model size, GPU availability, latency requirements, support ownership, and whether a hybrid deployment is acceptable.
 
-AI must not autonomously approve high-impact decisions. 
+### 14.2 Internal Knowledge Access
 
-Model prompts are not treated as a security boundary. 
+Will it be secure to connect AI with our internal knowledge base through permission-aware RAG?
 
-Continuous AI processes must have clear limits and stopping conditions. 
+The solution is viable only if source permissions are preserved, authorization happens before retrieval, and derived knowledge remains governed.
 
-Models and data stores must remain replaceable. 
+### 14.3 Business Value
 
-Human owners remain accountable for final decisions. 
+Are we solving a real business problem, or introducing more security risk, infrastructure cost, and operational complexity?
 
- 
- 
+The platform should proceed only when a focused use case shows measurable improvement over existing search, ticketing, and knowledge-management tools.
 
-8. High-Level Architecture 
+## 15. Product Positioning
 
-Users 
-Developer | Scientist | Support | Quality | Manager | Administrator 
-                               | 
-                         Web Interface 
-                               | 
-                   Enterprise Identity / SSO 
-                               | 
-                         Secure API Gateway 
-                               | 
-       +-----------------------+-----------------------+ 
-       |                       |                       | 
-Prompt/Data Classifier    Policy Engine          Audit Service 
-       |                       |                       | 
-       +-----------------------+-----------------------+ 
-                               | 
-                        AI Orchestrator 
-             +-----------------+-----------------+ 
-             |                 |                 | 
-       RAG Retriever      Model Router      Looping Engine 
-             |                 |                 | 
-        ACL Filter        +----+----+       Ticket Analysis 
-             |            |         |       Background Tasks 
-             |         Internal   Approved 
-             |           LLM      External LLM 
-             | 
-     +-------+-----------------------+ 
-     |                               | 
-Knowledge Index              Metadata / ACL Store 
-     |                               | 
-     +---------------+---------------+ 
-                     | 
-              Ingestion Pipeline 
-                     | 
-     Code | Documents | Tickets | SOPs | Service Knowledge 
- 
-
-Architecture Boundary 
-
-The model does not directly access source systems. 
-
-All access passes through controlled services responsible for identity, permissions, policy enforcement, retrieval, routing, and auditing. 
-
- 
- 
-
-9. Typical Request Flow 
-
-1. User signs in through enterprise identity. 
-2. The user submits a prompt or ticket for analysis. 
-3. The platform classifies the request and its data sensitivity. 
-4. The policy engine determines permitted sources and models. 
-5. The retrieval layer applies user and document permissions. 
-6. Authorized knowledge is retrieved. 
-7. The model router selects an approved model. 
-8. The model generates a grounded response. 
-9. The response is returned with citations and limitations. 
-10. The routing and policy decisions are recorded for audit. 
- 
- 
-
-10. Proposed Technology Stack 
-
-The final stack depends on Waters infrastructure and architecture review. 
-
-Application 
-
-React or Next.js 
-
-Fluent UI 
-
-Python with FastAPI 
-
-REST APIs with streaming responses 
-
-AI and Orchestration 
-
-Semantic Kernel, LangGraph, or lightweight custom orchestration 
-
-Ollama for local development 
-
-vLLM for production internal model serving 
-
-Approved internal and external model adapters 
-
-Retrieval and Data 
-
-PostgreSQL with pgvector or Qdrant 
-
-Local or approved embedding model 
-
-Hybrid keyword and vector search 
-
-PostgreSQL for policy, ACL, and application metadata 
-
-Identity and Security 
-
-Microsoft Entra ID 
-
-OAuth 2.0 and OpenID Connect 
-
-Azure Key Vault, HashiCorp Vault, or approved secrets management 
-
-TLS, private endpoints, and restricted network egress 
-
-Deployment and Monitoring 
-
-Docker Compose for development 
-
-Kubernetes or OpenShift for production 
-
-OpenTelemetry, Prometheus, and Grafana 
-
-Waters-controlled on-premises or approved hybrid infrastructure 
-
- 
- 
-
-11. Codebase Structure 
-
-A modular monorepo can keep the initial platform manageable. 
-
-waters-ai-vault/ 
-| 
-+-- apps/ 
-|   +-- web/                    # User and admin interface 
-|   +-- api/                    # FastAPI endpoints 
-|   +-- worker/                 # Ingestion and background jobs 
-| 
-+-- services/ 
-|   +-- policy/                 # Classification and policy enforcement 
-|   +-- retrieval/              # Search and permission filtering 
-|   +-- model-router/           # Internal and external model routing 
-|   +-- ticket-intelligence/    # Ticket analysis 
-|   +-- looping-engine/         # Continuous background analysis 
-|   +-- audit/                  # Audit event handling 
-|   +-- evaluation/             # AI security and quality checks 
-| 
-+-- connectors/ 
-|   +-- sharepoint/ 
-|   +-- azure-devops/ 
-|   +-- github/ 
-|   +-- servicenow/ 
-|   +-- file-ingestion/ 
-| 
-+-- packages/ 
-|   +-- contracts/              # Shared schemas 
-|   +-- security/               # Shared authorization utilities 
-|   +-- prompts/                # Version-controlled prompts 
-|   +-- telemetry/              # Logs, traces and metrics 
-| 
-+-- infrastructure/ 
-|   +-- docker/ 
-|   +-- kubernetes/ 
-|   +-- monitoring/ 
-| 
-+-- tests/ 
-|   +-- unit/ 
-|   +-- integration/ 
-|   +-- security/ 
-| 
-+-- docs/ 
-|   +-- architecture/ 
-|   +-- decisions/ 
-| 
-+-- README.md 
-+-- docker-compose.yml 
- 
- 
-
-12. Scope Boundaries 
-
-Waters AI Vault will not initially: 
-
-Replace existing ticketing or document-management systems. 
-
-Train a foundation model from scratch. 
-
-Provide unrestricted access to internal repositories. 
-
-Automatically modify ticket priorities. 
-
-Autonomously approve scientific, quality, safety, or regulatory decisions. 
-
-Control laboratory instruments. 
-
-Treat AI-generated content as an authoritative record. 
-
-Send sensitive content to external AI services. 
-
-Run unrestricted AI agents without resource and action limits. 
-
- 
- 
-
-13. Key Risks 
-
-13.1 On-Premises Cost 
-
-GPU infrastructure, model operations, power, maintenance, and specialist support may cost more than expected. 
-
-13.2 Model Capability 
-
-Smaller internal models may not provide sufficient quality for complex scientific or engineering tasks. 
-
-13.3 Prompt Injection 
-
-Malicious instructions may enter through user prompts, tickets, documents, code comments, or uploaded files. 
-
-13.4 Permission Leakage 
-
-Incorrect ACL synchronization or retrieval filtering may expose restricted information. 
-
-13.5 Secondary Knowledge Leakage 
-
-Generated summaries or embeddings may reveal protected information even when raw documents remain restricted. 
-
-13.6 Incorrect Recommendations 
-
-AI may misunderstand release context, dependencies, or business impact and recommend the wrong ticket priority. 
-
-13.7 Continuous Loop Failure 
-
-Background AI processes may create repeated alerts, unnecessary compute usage, or unreliable feedback loops. 
-
-13.8 Increased Platform Complexity 
-
-The solution may introduce another enterprise platform that requires infrastructure, governance, security, support, and long-term ownership. 
-
- 
- 
-
-14. Uncertainties 
-
-14.1 On-Premises Feasibility 
-
-Will running AI on-prem be technically and financially feasible? 
-
-This depends on expected usage, model size, GPU availability, latency requirements, support ownership, and whether a hybrid deployment is acceptable. 
-
-14.2 Internal Knowledge Access 
-
-Will it be secure to connect AI with our internal knowledge base through permission-aware RAG? 
-
-The solution is viable only if source permissions are preserved, authorization happens before retrieval, and derived knowledge remains governed. 
-
-14.3 Business Value 
-
-Are we solving a real business problem, or introducing more security risk, infrastructure cost, and operational complexity? 
-
-The platform should proceed only when a focused use case shows measurable improvement over existing search, ticketing, and knowledge-management tools. 
-
- 
- 
-
-15. Product Positioning 
-
-Waters AI Vault is a secure enterprise intelligence platform that connects authorized employees with protected engineering, scientific, operational, and business knowledge. It provides cited AI assistance, controlled model routing, and explainable work recommendations while preserving existing permissions, authoritative systems, and human decision ownership. 
+Waters AI Vault is a secure enterprise intelligence platform that connects authorized employees with protected engineering, scientific, operational, and business knowledge. It provides cited AI assistance, controlled model routing, and explainable work recommendations while preserving existing permissions, authoritative systems, and human decision ownership.
