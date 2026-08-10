@@ -1,4 +1,4 @@
-# Osmosis - Knowledge and Enginerring loop
+# Osmosis - Knowledge and Engineering Loop
 
 **Status:** Draft for product and architecture review  
 **Product type:** Secure enterprise AI and knowledge platform  
