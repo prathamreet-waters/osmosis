@@ -1,3 +1,5 @@
+<img src="https://capsule-render.vercel.app/api?type=soft&color=gradient&height=10&section=header" width="1080" align="center"/>
+
 # Osmosis
 
 **Osmosis** is an AI-assisted engineering initiative designed to reduce the time teams spend understanding defects, finding relevant technical knowledge, identifying likely root causes, and reusing confirmed solutions.
@@ -26,6 +28,11 @@ The initial focus areas are:
 - Kerberos
 - Customer Onboarding
 
+
+<img src="https://capsule-render.vercel.app/api?type=soft&color=gradient&height=10&section=header" width="1080" align="center"/>
+
+
+
 ## S1: Current Focused Direction
 
 The S1 version narrows Osmosis to a specific and measurable Digital Commerce problem: the engineering effort required to identify, analyze, and resolve defects.
@@ -52,6 +59,10 @@ The **AI Evaluation Harness** checks whether the analysis is accurate, grounded,
 
 **Read the current S1 PRD:** [s1.md](./documents/prd-s1/osmosis-prd-s1.md)
 
+
+<img src="https://capsule-render.vercel.app/api?type=soft&color=gradient&height=10&section=header" width="1080" align="center"/>
+
+
 ## G1: Original Broader Vision
 
 The G1 version represents the original Osmosis concept. It positioned the product as a secure enterprise AI and knowledge platform serving engineering, science, service, quality, and business functions.
@@ -76,23 +87,5 @@ G1 established the long-term knowledge vision, but it attempted to address sever
 
 **Read the original G1 PRD:** [g1.md](./documents/prd-g1/osmosis-prd-g1.md)
 
-## Current Product Flow
 
-1. A defect is raised in eProcurement, Kerberos, or Customer Onboarding.
-2. Osmosis collects the available authorized engineering context.
-3. AI analyzes the defect and produces evidence-backed recommendations.
-4. An engineer reviews the analysis, investigates the issue, and implements the fix.
-5. The confirmed root cause, solution, validation results, and feedback are captured.
-6. The **AI Evaluation Harness** tests the analysis against resolved defect cases.
-7. The **Looping Engineering Engine** uses validated outcomes to improve future defect analysis.
-
-## Repository Documents
-
-- [S1 PRD: AI-Assisted Defect Analysis Loop](./documents/prd-s1/osmosis-prd-s1.md)
-- [G1 PRD: Enterprise Knowledge and Engineering Loop](./documents/prd-g1/osmosis-prd-g1.md)
-
-## Current Direction
-
-S1 is the active product direction because it provides a focused problem, identifiable users, bounded workflows, and measurable outcomes. G1 remains the broader knowledge vision and may guide future expansion after the focused defect-analysis use case demonstrates clear value.
-
-Osmosis does not replace existing ticketing, source-control, documentation, or engineering systems. Those systems remain the sources of truth, and engineers remain accountable for approving and implementing every fix.
+<img src="https://capsule-render.vercel.app/api?type=soft&color=gradient&height=10&section=header" width="1080" align="center"/>
