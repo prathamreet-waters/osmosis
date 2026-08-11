@@ -18,6 +18,8 @@ Waters AI Vault is not intended to replace existing repositories, ticketing syst
 
 Enable Waters employees to securely use AI across engineering, science, service, quality, and business functions while keeping proprietary knowledge governed within Waters-controlled boundaries.
 
+![G1 High Level](g1-high.svg)
+
 ## 3. Problem Statements
 
 ### 3.1 Unsafe AI Usage
