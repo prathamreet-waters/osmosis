@@ -12,7 +12,7 @@ The platform provides secure AI access while preserving existing user permission
 
 Waters AI Vault is not intended to replace existing repositories, ticketing systems, scientific systems, or decision owners. It operates as an intelligence layer across them.
 
-![Osmosis architecture overview](documents/diagram/osmosis-arch-23.svg)
+![Osmosis architecture overview](osmosis-arch-23.svg)
 
 ## 2. Product Vision
 
@@ -242,9 +242,9 @@ Ticket modifications, regulated decisions, scientific approvals, quality approva
 
 ## 8. High-Level Architecture
 
-![High-level architecture overview](documents/diagram/osmosis-arch-22.svg)
+![High-level architecture overview](osmosis-arch-22.svg)
 
-![Detailed architecture view](documents/diagram/osmosis-arch-21.svg)
+![Detailed architecture view](osmosis-arch-21.svg)
 
 ### Architecture Boundary
 
