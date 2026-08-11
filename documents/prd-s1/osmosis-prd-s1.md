@@ -27,6 +27,8 @@ The project will combine:
 
 The system will support engineers during defect investigation. It will not autonomously approve or merge code changes.
 
+![S1 High Level Architecture](osmosis-s1-arch-high.svg)
+
 ## 2. Problem Statement
 
 Digital Commerce teams spend considerable engineering bandwidth on defect investigation.
