@@ -2,14 +2,16 @@
 
 > **Status:** Draft  
 > **Project type:** Developer productivity and knowledge automation  
-> **Initial scope:** GitHub repositories and Confluence  
-> **Future scope:** SharePoint, API documentation, runbooks, and release notes
+> **Initial scope:** One GitHub repository, merged pull requests, Markdown/README documentation, and a human review UI  
+> **Future scope:** Confluence, SharePoint, API documentation, runbooks, release notes, and additional repositories
 
 ---
 
 ## 1. Product Summary
 
 **Osmosis Document Engineer** is an AI-assisted document engineer that keeps engineering documentation synchronized with the systems it describes.
+
+**Osmosis does not generate documentation from scratch. It detects when existing documentation becomes wrong because engineering changed.**
 
 It listens for meaningful engineering events such as merged pull requests, releases, API contract changes, and configuration updates. It analyzes what changed, identifies the documentation that may be affected, checks whether that documentation is now outdated, and generates an evidence-backed update proposal.
 
@@ -71,13 +73,16 @@ Keep engineering documentation aligned with the systems it describes by detectin
 3. **Explain rather than merely generate**  
    Every suggestion must show why the update is required and where the evidence came from.
 
-4. **Keep humans in control**  
+4. **Make evidence mandatory**  
+   Every suggestion must cite valid source evidence. **No evidence means no suggested update.**
+
+5. **Keep humans in control**  
    No proposed change is published without explicit review and approval.
 
-5. **Prefer precision over volume**  
+6. **Prefer precision over volume**  
    A small number of useful suggestions is more valuable than many noisy or irrelevant ones.
 
-6. **Improve through explicit feedback**  
+7. **Improve through explicit feedback**  
    Accepted, edited, rejected, and irrelevant suggestions should improve future results in a transparent and measurable way.
 
 ---
@@ -91,33 +96,37 @@ When an engineering change occurs, Osmosis will:
 3. Determine whether the change affects documented behavior or instructions.
 4. Ignore changes that do not require documentation updates.
 5. Identify and explain any mismatch with supporting evidence.
-6. Draft a focused correction.
-7. Send the proposal to the responsible document owner.
-8. Publish only after approval.
-9. Use the review decision to evaluate and improve future suggestions.
+6. Stop without creating a suggestion if valid evidence is unavailable.
+7. Draft a focused correction.
+8. Send the proposal to the responsible document owner.
+9. Publish only after approval.
+10. Notify the document owner by email after the approved update is successfully published.
+11. Use the review decision to evaluate and improve future suggestions.
 
 ### Osmosis operating loop
 
 ```mermaid
 flowchart LR
-    A["1. Something changes"] --> B["2. Understand the change"]
+    A["1. Pull request is merged"] --> B["2. Understand the change"]
     B --> C["3. Find related documentation"]
     C --> D{"4. Is the documentation<br/>actually affected?"}
 
     D -->|"No"| E["Ignore the change"]
     D -->|"Yes"| F["5. Identify the mismatch"]
-    F --> G["6. Create an evidence-backed update"]
-    G --> H["7. Send it to the document owner"]
+    F --> G{"6. Is valid evidence available?"}
+    G -->|"No"| N["Do not create a suggestion"]
+    G -->|"Yes"| H["7. Create an evidence-backed update"]
+    H --> I["8. Send it to the document owner"]
 
-    H --> I{"8. Owner decides"}
-    I -->|"Accept"| J["Publish the correction"]
-    I -->|"Edit"| K["Refine and publish"]
-    I -->|"Reject"| L["Do not publish"]
-
-    J --> M["9. Learn from the decision"]
-    K --> M
-    L --> M
-    M --> B
+    I --> J{"9. Owner decides"}
+    J -->|"Accept"| K["Publish the correction"]
+    J -->|"Edit"| L["Refine and publish"]
+    J -->|"Reject"| M["Do not publish"]
+    K --> O["10. Send email notification"]
+    L --> O
+    O --> P["11. Learn from the decision"]
+    M --> P
+    P --> B
 
     classDef event fill:#FFF4E5,stroke:#D88A20,color:#3B280B,stroke-width:2px
     classDef intelligence fill:#E8F0FE,stroke:#4C78D0,color:#14284A,stroke-width:2px
@@ -127,18 +136,18 @@ flowchart LR
     classDef stop fill:#FCE8E6,stroke:#C9574D,color:#4D1713,stroke-width:2px
 
     class A event
-    class B,C,F,G,M intelligence
-    class D,I decision
-    class H human
-    class J,K publish
-    class E,L stop
+    class B,C,F,H,P intelligence
+    class D,G,J decision
+    class I human
+    class K,L,O publish
+    class E,M,N stop
 ```
 
 ---
 
 ## 5. Initial User Scenario
 
-A pull request changes the payment timeout configuration from:
+A merged pull request changes the payment timeout configuration from:
 
 ```text
 PAYMENT_TIMEOUT=30
@@ -150,39 +159,41 @@ to:
 PAYMENT_TIMEOUT=60
 ```
 
-However, the deployment runbook still states that the payment timeout is 30 seconds.
+However, the repository's `README.md` still states that the payment timeout is 30 seconds.
 
 Osmosis detects the mismatch and creates a proposal:
 
-> The payment timeout changed from 30 to 60 seconds in PR #482. The deployment runbook still uses the previous value. Suggested update: replace 30 seconds with 60 seconds.
+> The payment timeout changed from 30 to 60 seconds in merged PR #482. The `README.md` still uses the previous value. Evidence: PR #482 and the changed configuration line `PAYMENT_TIMEOUT=60`. Suggested update: replace 30 seconds with 60 seconds.
 
-The document owner can accept the proposal, edit it before accepting, reject it, or mark it as irrelevant.
+The document owner can accept the proposal, edit it before accepting, reject it, or mark it as irrelevant. After an approved correction is successfully published, Osmosis sends the owner an email notification.
 
 ### Example experience
 
 ```mermaid
 sequenceDiagram
-    participant Change as Engineering Change
+    participant Change as Merged PR #482
     participant Osmosis
-    participant Doc as Deployment Runbook
+    participant Doc as README.md
     participant Owner as Document Owner
+    participant Email as Email Notification
 
     Note over Change: Payment timeout changes<br/>from 30 to 60 seconds
-    Change->>Osmosis: Change completed
-
-    Osmosis->>Doc: Check related instructions
-    Doc-->>Osmosis: Runbook still says 30 seconds
-
-    Note over Osmosis: Mismatch detected
-
-    Osmosis->>Owner: Propose replacing<br/>30 seconds with 60 seconds
-    Note over Owner: Proposal includes the change,<br/>affected instruction, evidence,<br/>and suggested correction
+    Change->>Osmosis: PR merged with PAYMENT_TIMEOUT=60
+    Osmosis->>Doc: Check related timeout instructions
+    Doc-->>Osmosis: README still says 30 seconds
+    Osmosis->>Change: Verify PR and changed configuration line
+    Change-->>Osmosis: Valid source evidence found
+    Note over Osmosis: Mismatch detected and grounded in evidence
+    Osmosis->>Owner: Show mismatch, evidence,<br/>correction, and confidence
 
     alt Owner accepts
         Owner->>Doc: Approve correction
-        Note over Doc: Runbook now says 60 seconds
+        Note over Doc: README now says 60 seconds
+        Osmosis->>Email: Notify owner after successful publication
     else Owner edits
         Owner->>Doc: Refine and approve correction
+        Note over Doc: Edited correction is published
+        Osmosis->>Email: Notify owner after successful publication
     else Owner rejects
         Owner-->>Osmosis: Do not update
     end
@@ -225,20 +236,20 @@ For example:
 
 ```text
 payment-service/
-    -> Payment Service README
-    -> Payment API Confluence page
-    -> Payment deployment runbook
+    -> README.md
+    -> docs/payment-api.md
+    -> docs/deployment.md
 ```
 
 These relationships help Osmosis narrow its search and determine which documents are reasonable candidates for impact analysis.
 
-A relationship may be established through explicit ownership, links, repository structure, references, historical updates, or other reliable signals. The MVP should prefer clear and controlled relationships over attempting to understand an entire company knowledge base.
+A relationship may be established through explicit ownership, links, repository structure, references, historical updates, or other reliable signals. The MVP should prefer clear, controlled, repository-local relationships over attempting to understand an entire company knowledge base.
 
 ---
 
 ## 8. Evidence-Backed Update Proposal
 
-An Osmosis proposal must be understandable and reviewable without asking the document owner to repeat the investigation.
+An Osmosis proposal must be understandable and reviewable without asking the document owner to repeat the investigation. Evidence is a hard requirement: if Osmosis cannot identify valid source evidence for a mismatch, it must not generate an update proposal. **No evidence means no suggested update.**
 
 Each proposal should include:
 
@@ -252,18 +263,20 @@ Each proposal should include:
 
 ### What the document owner sees
 
+The following information and actions should appear together in one clear review screen.
+
 ```mermaid
 flowchart TB
     A["Osmosis Update Proposal"]
 
     A --> B["What changed"]
     A --> C["Which document is affected"]
-    A --> D["Why the document is now outdated"]
+    A --> D["What is wrong and why"]
     A --> E["Evidence from the source change"]
-    A --> F["Suggested correction"]
+    A --> F["Proposed correction"]
     A --> G["Confidence level"]
 
-    B --> H["A complete, reviewable explanation"]
+    B --> H["One complete review screen"]
     C --> H
     D --> H
     E --> H
@@ -271,11 +284,13 @@ flowchart TB
     G --> H
 
     H --> I{"Document owner's decision"}
-
     I -->|"Accept"| J["Publish as proposed"]
     I -->|"Edit and accept"| K["Publish the refined version"]
     I -->|"Reject"| L["Leave the document unchanged"]
     I -->|"Irrelevant"| M["Improve future detection"]
+    J --> N["Show publication status"]
+    K --> N
+    N --> O["Send email after successful update"]
 
     classDef proposal fill:#E8F0FE,stroke:#4C78D0,color:#14284A,stroke-width:2px
     classDef evidence fill:#F5F7FA,stroke:#7A8796,color:#202A35,stroke-width:1.5px
@@ -288,7 +303,7 @@ flowchart TB
     class B,C,D,E,F,G evidence
     class H trust
     class I decision
-    class J,K positive
+    class J,K,N,O positive
     class L,M negative
 ```
 
@@ -304,6 +319,8 @@ The document owner can:
 - **Mark as irrelevant:** Indicate that the detected relationship or impact was not useful
 
 No document should be changed automatically in the initial product experience. Human approval is a core product requirement, not merely a temporary safeguard.
+
+The review screen must show the publication status. After an approved correction is successfully published, Osmosis sends an email notification to the relevant document owner with the affected document and publication result.
 
 Reviewer feedback must be used carefully and transparently. Osmosis should learn from explicit decisions, but it must not silently infer preferences from private reviewer behavior.
 
@@ -352,7 +369,7 @@ Create a focused proposed edit grounded in the source change.
 
 ### 11.6 Evidence presentation
 
-Show enough supporting context for the owner to understand and verify the proposal.
+Show enough supporting context for the owner to understand and verify the proposal. If valid evidence is unavailable, do not create the proposal.
 
 ### 11.7 Human review
 
@@ -362,7 +379,11 @@ Allow the responsible owner to accept, modify, reject, or mark a proposal as irr
 
 Publish only after approval, either by updating the selected document or by raising a documentation change for review.
 
-### 11.9 Continuous evaluation
+### 11.9 Publication notification
+
+Notify the relevant document owner by email after an approved update is successfully published.
+
+### 11.10 Continuous evaluation
 
 Measure quality and use explicit review outcomes to improve future detection and drafting.
 
@@ -373,13 +394,15 @@ Measure quality and use explicit review outcomes to improve future detection and
 The first version should support only:
 
 - One GitHub repository
-- README files and selected Confluence pages
+- Markdown and README files stored in that repository
 - Merged pull requests as the trigger
 - Documentation relationship mapping
 - Documentation impact detection
 - Mismatch identification
 - Evidence-backed draft generation
+- A clear review UI with Accept, Edit, Reject, and Irrelevant actions
 - Human review and approval
+- Email notification after a successful approved update
 - Basic publication or documentation pull-request creation
 - Basic evaluation results
 
@@ -391,7 +414,7 @@ This scope is intentionally narrow. It is small enough to complete while still d
 
 The MVP demonstration should tell one simple, complete story:
 
-1. Show an accurate README or Confluence page.
+1. Show an accurate README or Markdown document.
 2. Merge a pull request that changes an API, configuration, or documented behavior.
 3. Show that the existing document is now outdated.
 4. Show Osmosis identifying the affected document and section.
@@ -399,7 +422,8 @@ The MVP demonstration should tell one simple, complete story:
 6. Show the proposed correction and confidence level.
 7. Have a developer review and approve the proposal.
 8. Show Osmosis updating the document or raising a documentation pull request.
-9. Show the review result reflected in the evaluation output.
+9. Show the successful publication status and email notification.
+10. Show the review result reflected in the evaluation output.
 
 The demo should prioritize correctness and clarity over breadth. One convincing end-to-end example is more valuable than multiple incomplete cases.
 
@@ -409,17 +433,18 @@ The demo should prioritize correctness and clarity over breadth. One convincing 
 
 The MVP succeeds if it demonstrates:
 
-- High accuracy in identifying affected documents
-- High accuracy in locating the affected section
-- Low unnecessary-update rate
-- Reduced time spent finding documentation that needs updating
-- Evidence attached to every proposed change
-- Factually grounded suggested corrections
-- No automatic publication without approval
-- Strong reviewer acceptance of useful suggestions
-- Clear handling of rejected and irrelevant suggestions
+- **Affected-document identification rate:** Percentage of known affected documents correctly identified
+- **Affected-section accuracy:** Percentage of evaluated cases in which the correct document section is located
+- **Mismatch detection accuracy:** Percentage of known documentation mismatches correctly detected
+- **Evidence validity rate:** Percentage of proposals supported by valid source evidence; the target is **100%** because proposals without valid evidence must be blocked
+- **Unnecessary-suggestion rate:** Percentage of suggestions rejected as unrelated, unnecessary, or unsupported
+- **Reviewer acceptance rate:** Percentage of proposals accepted as-is or after editing
+- **Reviewer edit rate:** Percentage of accepted proposals that require modification
+- **Review time:** Median time taken by a reviewer to decide on a proposal
+- **Publication and notification success rate:** Percentage of approved updates successfully published and followed by an email notification
+- **Human-control compliance:** No automatic publication without explicit approval
 
-The most important signal is whether reviewers consistently consider the proposals useful and trustworthy.
+The most important signal is whether reviewers consistently consider the proposals useful, grounded, and trustworthy.
 
 ---
 
@@ -427,6 +452,8 @@ The most important signal is whether reviewers consistently consider the proposa
 
 The first version will not:
 
+- Update existing HLDs or other documents in Confluence
+- Support Confluence, SharePoint, or other external document systems as editable MVP sources
 - Rewrite the complete company knowledge base
 - Publish changes without human approval
 - Treat AI-generated text as fact
@@ -487,7 +514,7 @@ Too many low-value proposals could cause reviewers to ignore the product.
 
 A generated draft may include claims not supported by the source change.
 
-**Guardrail:** Require evidence for every proposal, constrain corrections to the detected mismatch, and keep a human approval step.
+**Guardrail:** Enforce **no evidence means no suggested update**, constrain corrections to the detected mismatch, and keep a human approval step.
 
 ### Unauthorized access
 
@@ -508,6 +535,7 @@ Users may begin to treat generated proposals as automatically correct.
 After the MVP proves the core change-to-document connection, Osmosis may expand to:
 
 - Additional GitHub repositories
+- Confluence pages and human-reviewed recommendation workflows
 - SharePoint documents
 - API documentation
 - Operational runbooks
@@ -522,6 +550,8 @@ Expansion should preserve the same core principles: focused impact detection, ev
 ---
 
 ## 19. Product Positioning
+
+**Osmosis does not generate documentation from scratch. It detects when existing documentation becomes wrong because engineering changed.**
 
 **Osmosis Document Engineer keeps engineering documentation aligned with the systems it describes. It detects when a code, configuration, API, release, or process change makes documentation outdated, drafts an evidence-backed correction, and sends it to the responsible person for approval.**
 
